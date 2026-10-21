@@ -120,11 +120,35 @@ class ResourcesTest(unittest.TestCase):
 
 
 class PackagingTest(unittest.TestCase):
+    def test_variant_selection_defaults_to_open_and_gated_replaces_only_gate_classes(self):
+        with tempfile.TemporaryDirectory() as t:
+            payload = Path(t)
+            for name in kit.GATE_VARIANT_FILES:
+                for folder, data in [('smali', b'always-enabled'), ('gated-smali', b'gated')]:
+                    path = payload / folder / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(data)
+            unrelated = payload / 'smali/Other.smali'
+            unrelated.write_bytes(b'unchanged feature code')
+            kit.select_variant(payload)
+            for name in kit.GATE_VARIANT_FILES:
+                self.assertEqual(b'always-enabled', (payload / 'smali' / name).read_bytes())
+            kit.select_variant(payload, gated=True)
+            for name in kit.GATE_VARIANT_FILES:
+                self.assertEqual(b'gated', (payload / 'smali' / name).read_bytes())
+            self.assertEqual(b'unchanged feature code', unrelated.read_bytes())
+
+    def test_missing_variant_is_rejected(self):
+        with tempfile.TemporaryDirectory() as t:
+            with self.assertRaises(kit.Incompatible):
+                kit.select_variant(Path(t), gated=True)
+
     def test_payload_extracts_resources_and_smali_only_in_temporary_storage(self):
         with tempfile.TemporaryDirectory() as t:
             bundle = Path(t) / 'kit'
             bundle.mkdir()
             files = {'res/values/strings.xml': b'<resources/>',
+                     'gated-smali/com/example/Gate.smali': b'.class public Lcom/example/Gate;',
                      'smali/com/example/Screen.smali': b'.class public Lcom/example/Screen;'}
             with zipfile.ZipFile(bundle / 'payload.zip', 'w') as archive:
                 for name, data in files.items():

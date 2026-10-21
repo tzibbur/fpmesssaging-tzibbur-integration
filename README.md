@@ -1,4 +1,4 @@
-# Tzibbur integration for FP Messaging — kit 2
+# Tzibbur integration for FP Messaging — kit 3
 
 This package carries the Tzibbur integration in a primary replacement DEX.
 It also contains the resource additions, exact
@@ -8,6 +8,23 @@ Resources and smali are stored together in `payload.zip`. Leave that file zipped
 when uploading this kit to a repository. The installer verifies and extracts it
 into temporary storage automatically, then removes that storage on completion
 or failure. The kit folder contains fewer than 100 files, including tool notices.
+
+## Choose the access behavior
+
+The default build always enables Tzibbur. It ignores `tzibbur.allow` and
+`not_tag`, and clears `tzb_config/disable_tzibbur` at host and guest entry points.
+This also handles an old disabled preference left by a previous installation.
+
+Use `--gated` to select the existing device-controlled variant instead:
+
+```sh
+python integrate.py "Messages-original.apk" --check --gated
+python integrate.py "Messages-original.apk" --out "result-gated" --gated
+```
+
+In that variant, `not_tag=1` blocks Tzibbur, and `tzibbur.allow=1` enables it on
+an unrestricted device. The access decision updates `tzb_config/disable_tzibbur`.
+Normal Tzibbur login, account and server permissions still apply in both variants.
 
 ## Quick start
 
@@ -26,7 +43,8 @@ python integrate.py "Messages-original.apk" --out "result"
 ```
 
 Use `python3` instead of `python` where appropriate. Paths may contain spaces.
-`--apkeditor` or the `APKEDITOR` environment variable can override the bundled
+`--gated` works with both `--check` and `--out`. `--apkeditor` or the `APKEDITOR`
+environment variable can override the bundled
 tool with a JAR path or executable on PATH. `--java` selects a Java
 executable. The script does not download anything, modify the input APK or install
 on a device. The output directory must be new. An incompatible target produces
@@ -40,7 +58,7 @@ Output:
 | `classes.dex` | Replacement DEX generated for this exact target's resource IDs |
 | `AndroidManifest.xml` | Complete merged manifest, for review |
 | `resource-map.json` | Exact source-to-target resource ID mapping by type/name |
-| `report.json` | Input/output hashes, version, class/resource counts and checks |
+| `report.json` | Selected access variant, input/output hashes, version, counts and checks |
 | `build.log` | APKEditor output |
 
 The default versionCode is the input's versionCode + 1; the versionName gets
@@ -100,9 +118,17 @@ inside those seven classes require a new compatible package; the script will
 identify the class that needs adapting. Related classes remain in the original
 DEX, and required inheritance/method/field contracts are checked.
 
-`classes.dex` at the package root is a prebuilt reference using the source
-resource IDs. Use the DEX generated in `result` for the receiving APK. It can have
-different numeric IDs even though it implements the same behavior.
+The package contains two complete prebuilt alternatives using the source IDs:
+
+| File | Access behavior |
+| --- | --- |
+| `classes.dex` | Always enabled; selected by default |
+| `classes-gated.dex` | Existing device access controls; selected with `--gated` |
+
+Only the selected variant goes into the APK as its primary `classes.dex`.
+Use the DEX generated in `result` for the receiving APK: resource IDs can differ
+from the prebuilt references. The installer relinks the selected variant's smali
+before assembling the final DEX.
 
 ## Resources and manifest: exact changes
 
@@ -110,10 +136,11 @@ different numeric IDs even though it implements the same behavior.
 Merge its `uses-permission` children into the manifest root (deduplicated by name)
 and its `application` children into the existing application. Keep the existing
 application class, package, labels, unrelated components and permissions. Each
-Tzibbur screen declares its own theme. The secret-code receiver is included.
+Tzibbur screen declares its own theme.
 
 The `res/` folder inside `payload.zip` contains the resource files and value
-entries to add. The `smali/` folder holds all editable replacement classes.
+entries to add. The `smali/` folder holds the default replacement classes;
+`gated-smali/` contains the alternate access classes used with `--gated`.
 The resource additions contain
 **473 new resource names**, listed in `bundle.json` under `added_resources`.
 The one existing layout changed is `layout/conversation_list_item.xml`, which
@@ -122,8 +149,9 @@ Existing host colors, strings, styles and IDs are retained. New Tzibbur resource
 refer to the target's host styles where appropriate, so its color choices remain.
 
 The Python script first verifies `payload.zip`, checks its entries against the
-hashes in `bundle.json` under `payload_files`, and extracts it into temporary
-storage. It rejects unexpected, duplicate or unsafe paths. It then:
+hashes in `bundle.json` under `payload_files`, extracts it into temporary
+storage, and selects the requested variant. It rejects unexpected, duplicate or
+unsafe paths. It then:
 
 1. Decodes the target with APKEditor and checks the compatibility contract.
 2. Matches borrowed host resources by type/name.
@@ -169,9 +197,7 @@ not a claim of support for unrelated Android messaging apps or newer SDK targets
 - D-pad selection and Copy/Delete in Tzibbur threads (local deletion).
 - Paste in SMS/MMS/new drafts and Tzibbur; per-thread notification pause for both.
 - Tzibbur account, devices, invitations, blocks, connection and notification settings.
-- The exact current gate: `not_tag=1` always blocks Tzibbur. Otherwise,
-  `tzibbur.allow=1` enables it and clears the guest
-  `tzb_config/disable_tzibbur` preference. A disabled result sets that preference.
+- Always-enabled access by default, or the optional `--gated` behavior described above.
 
 ## Checks and manual acceptance
 
@@ -186,7 +212,9 @@ tests passed for the integrated feature build; this package retains that code.
 
 After signing/installing, check the mixed inbox, New, SMS and Tzibbur conversations,
 Paste, message Copy/Delete, settings/Back/legal pages, and notification pause.
-Check both enable paths and confirm `not_tag=1` wins. Test SMS/MMS and Tzibbur
+For the default build, confirm Tzibbur remains available with `tzibbur.allow=0`
+and `not_tag=1`. For a `--gated` build, check property-controlled access and
+confirm `not_tag=1` blocks it. Test SMS/MMS and Tzibbur
 delivery using the intended firmware/accounts. The installer itself never sends
 messages, changes device flags, accesses an account or connects to the Tzibbur API.
 

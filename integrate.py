@@ -25,6 +25,8 @@ RESOURCE = re.compile(r'(?<![\w])0x7f[0-9a-fA-F]{6}(?![\w])')
 DESCRIPTOR = re.compile(r'L[\w$/-]+;')
 MEMBER = re.compile(r'(L[\w$/-]+;)->([^\s,}\"]+)')
 DEX_NAME = re.compile(r'classes(?:(\d+))?\.dex$')
+GATE_VARIANT_FILES = ('com/android/mms/tzib/TzibGate.smali',
+                      'com/tzibbur/basic/util/TzbKillSwitch.smali')
 
 
 class Incompatible(ValueError):
@@ -283,7 +285,7 @@ def extract_payload(bundle, destination, metadata):
         for item in archive.infolist():
             name = item.filename
             parts = name.rstrip('/').split('/')
-            require(parts[0] in ('smali', 'res') and
+            require(parts[0] in ('smali', 'res', 'gated-smali') and
                     all(part not in ('', '.', '..') for part in parts) and
                     '\\' not in name and ':' not in name,
                     'Unsafe payload path: ' + name)
@@ -303,6 +305,16 @@ def extract_payload(bundle, destination, metadata):
             path = destination.joinpath(*name.split('/'))
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
+
+
+def select_variant(payload, gated=False):
+    """Choose one complete overlay before relinking it for the receiving APK."""
+    for relative in GATE_VARIANT_FILES:
+        default = payload / 'smali' / relative
+        alternate = payload / 'gated-smali' / relative
+        require(default.is_file() and alternate.is_file(), 'Missing access variant: ' + relative)
+        if gated:
+            shutil.copy2(alternate, default)
 
 
 def analyze(target, bundle, meta):
@@ -461,6 +473,8 @@ def main():
     parser.add_argument('apk', type=Path, help='Original Messages APK; never modified')
     parser.add_argument('--out', type=Path, help='New output directory (must not already exist)')
     parser.add_argument('--check', action='store_true', help='Check compatibility without building')
+    parser.add_argument('--gated', action='store_true',
+                        help='Use device access controls (default: always enable Tzibbur)')
     parser.add_argument('--apkeditor', default=os.environ.get('APKEDITOR', default_editor),
                         help='APKEditor executable or .jar path (default: bundled 1.4.5)')
     parser.add_argument('--java', default='java', help='Java executable for a .jar tool')
@@ -470,7 +484,7 @@ def main():
     require(args.check or args.out is not None, 'Specify --out or --check')
     require(args.out is None or not args.out.exists(), 'Output directory already exists')
     meta = read_json(bundle / 'bundle.json')
-    require(meta.get('format') == 2, 'Unsupported kit format; use the installer included with this kit')
+    require(meta.get('format') == 3, 'Unsupported kit format; use the installer included with this kit')
     verify_bundle(bundle, meta)
     editor = [args.java, '-jar', str(Path(args.apkeditor).resolve())] if args.apkeditor.lower().endswith('.jar') else [args.apkeditor]
     with tempfile.TemporaryDirectory(prefix='tzibbur-integrate-') as scratch:
@@ -478,6 +492,7 @@ def main():
         target, log = work / 'target', work / 'build.log'
         print('Extracting resources and smali into temporary storage...', flush=True)
         extract_payload(bundle, work / 'payload', meta)
+        select_variant(work / 'payload', args.gated)
         print('Decoding target APK...', flush=True)
         run_tool(editor, ['d', '-i', str(args.apk.resolve()), '-o', str(target)], log)
         print('Checking host code, dependencies and resources...', flush=True)
@@ -485,6 +500,7 @@ def main():
         report = {
             'bundle': meta['version'], 'input_sha256': sha(args.apk.read_bytes()),
             'input_version': manifest.get(A + 'versionName'), 'compatible': True,
+            'tzibbur_access': 'gated' if args.gated else 'always-enabled',
             'replacement_classes': sorted(meta['replaced_classes']),
             'total_overlay_classes': len(overlay), 'resources_added': len(meta['added_resources']),
             'resource_ids_changed': sum(a != b for a, b in mapping.items()),

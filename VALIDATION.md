@@ -25,7 +25,7 @@
 
 ## Installer tests
 
-All **17** standard-library Python tests pass. They cover:
+All **19** standard-library Python tests pass. They cover:
 
 - ID allocation while retaining existing IDs, and collision rejection.
 - Field/constants/array remapping and `const/high16` width changes.
@@ -39,9 +39,27 @@ All **17** standard-library Python tests pass. They cover:
 - Temporary extraction of the combined resource/smali payload and cleanup.
 - Rejection of unsafe archive paths/symlinks and changed, missing, extra or
   duplicate payload entries.
+- Default/optional variant selection, preservation of unrelated classes, and
+  rejection of a missing variant.
 
 The integrated feature build's 44 Robolectric tests passed before this export.
-No app feature implementation was changed while preparing this kit.
+Kit 3 changes the access policy in its default variant. The optional gated
+variant retains the previous access implementation.
+
+## Access variants
+
+- Four Robolectric tests exercise the actual default Java classes: host access
+  across property/global-setting combinations, direct guest entry with stale
+  preferences of different types, unavailable context/storage, and the preserved
+  compatibility method contract.
+- The existing gated access and inbox tests were rerun independently.
+- Both variants were used for full APK builds. All 425 replacement classes,
+  resource IDs and manifest entries passed the post-build checks; original DEX
+  bytes were preserved in each build.
+- The default DEX contains no `not_tag` or `tzibbur.allow` reference. Its two
+  access classes replace the host and guest checks together. The optional DEX
+  preserves the original access classes.
+- Both modes use the same 473 added resources and other integration features.
 
 ## Device check
 
@@ -49,12 +67,14 @@ No app feature implementation was changed while preparing this kit.
 - The existing app data and device enable settings were retained.
 - A small `app_process` probe opened the installed APK using Android's
   `PathClassLoader`. It resolved `ConversationList.tzibInboxChanged()`, which
-  exists only in our primary replacement class, and the Tzibbur secret-code
-  receiver. This confirms the duplicate-class precedence on this firmware.
+  exists only in our primary replacement class. This confirms the duplicate-class
+  precedence on this firmware.
   The temporary device probe file was removed afterward.
 - UI, keypad, account actions and real message/notification delivery remain for
   the user's manual acceptance checks. No messages or authentication actions were
   sent during packaging verification.
+- The prior device probe predates the new default access variant. The new mode
+  has automated behavior/build coverage; device acceptance remains manual.
 
 The structural checks and device class-loading probe establish this package's
 tested scope. A different company's firmware and materially changed host classes

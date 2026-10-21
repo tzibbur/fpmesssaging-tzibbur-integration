@@ -475,13 +475,14 @@
     "style/TzibDialogTheme"
   ],
   "files": {
-    "README.md": "4198655f5f7258b5b2421eecbf08b2f5216b08b475618a18049e6c9a495d36fd",
-    "VALIDATION.md": "71e98afbd885c80fbd52304ebeae146ef9137a6609c98701b6079c298e2054e3",
-    "classes.dex": "ec2981073d38e43d497ca3468f6db5d517bacb9374ba8f166c31d36c7ef9196e",
-    "integrate.py": "171e08da7c69cce9ef590494a98556489ec015bf4351b7c5d9ef15386c7b4e62",
+    "README.md": "53480e28a0eb2058ee2619f812ac430f637145176ba48f60c81d4d5ebd16395b",
+    "VALIDATION.md": "74cdc0b1f6091c990f852ec28369384b3877c15eb5e8405c20c07849ba910ab9",
+    "classes-gated.dex": "4ded4a694004893e5c70b876974a8045a74a63fa73825da50587a7d058547e26",
+    "classes.dex": "4b08a8b9935594e75121a841261ef329615fe1236127566e6405232d17d18ab4",
+    "integrate.py": "fa3b25f2cc6cfc3085db174709df483a85f6a4a279761fae83a138acf2a6dd88",
     "manifest-additions.xml": "ba2c542740875d1a76165f6a819d470230c474c73ad7790c79acf47119013d0d",
-    "payload.zip": "58645479e37fafcf764a6f0166487efb6eb85fb9a7cdee2e92fa15aed4c8364d",
-    "test_integrate.py": "a3164bf59b49b272937ba3f0e226afccaa29b8e3c8758b2c90e82d9d4d510cea",
+    "payload.zip": "16b6efa843c54467cd2660276cda6d640776841bec31ac08c20b2b6eb61f74c8",
+    "test_integrate.py": "5438324f65ec4f58ad93e10734a5e6eb10748109b9e913f3e0b6336d90dcd181",
     "tools/APKEditor-1.4.5.jar": "71999a1f28cf6b457aff17c139436349cd6ea30d75a0f9cd52f07bd52e21897b",
     "tools/notices/ANTLR2-copyright.txt": "58fc325fb821c3b89b47a5300a206da290c7328d9eb25f14dec361a764ef21f8",
     "tools/notices/ANTLR3-runtime-license-header.txt": "73739f93deb28e0f69586f8db79f40972505bd30e8be9812f4c18facecf8e090",
@@ -495,8 +496,10 @@
     "tools/notices/XMLPull-copyright.txt": "59c22e2024b580468f3786e9de06469f44fad9e9930328208966070501dd6b37",
     "tools/notices/smali-NOTICE.txt": "e247d92c57251fc3e674b5366bafd40ed644bfc7c4a55172e464685a25622945"
   },
-  "format": 2,
+  "format": 3,
   "payload_files": {
+    "gated-smali/com/android/mms/tzib/TzibGate.smali": "b9fa630d95326dc68c9721279c903d4316b02973f598074fac84cbc23e255704",
+    "gated-smali/com/tzibbur/basic/util/TzbKillSwitch.smali": "9a36aae85b5ff106d5b9cb1b9eaf1847138be4626b0c9797289d2b92cc4a3805",
     "res/color/tzb_button_primary_text.xml": "57c4eac04712ccf9bd8e5eb3a14ab590ff69ebd8f8d6579c5ceca724da8862ac",
     "res/drawable-anydpi-v24/tzb_ic_launcher.xml": "30b09dd142639d1d330829102b3b480c1b0ebc19b7814a29aca3b7478d5f5ca7",
     "res/drawable-hdpi/tzb_ic_launcher.png": "6ba4f8bd0472b3a8bbb59a0d91b90e1e186e58845a62802b095ed43dc168bacf",
@@ -592,7 +595,7 @@
     "smali/com/android/mms/tzib/TzibConversationStyle.smali": "38f0878924e122cba1955ea6e6f06c343ba2cf7525d8615f56debe471f43defb",
     "smali/com/android/mms/tzib/TzibDeletedMessages.smali": "326011023ed52d0f3c553cf2af2fecae6dd0bc1f39a64d01e7e00b1946ff4b8b",
     "smali/com/android/mms/tzib/TzibDialogs.smali": "619ac2e41e14fbc65ff5f0d0693d439957f1e92f0155872cff256ccabc114ad5",
-    "smali/com/android/mms/tzib/TzibGate.smali": "b9fa630d95326dc68c9721279c903d4316b02973f598074fac84cbc23e255704",
+    "smali/com/android/mms/tzib/TzibGate.smali": "32c707e7edd56860d411afd9261807d505307c4dafd309688fdbf0ee687316be",
     "smali/com/android/mms/tzib/TzibHook$$ExternalSyntheticLambda0.smali": "c4796cfe0f332c1ba9f87434c1e27b395db99d4b19591790db90353f36f5aee6",
     "smali/com/android/mms/tzib/TzibHook$$ExternalSyntheticLambda1.smali": "616c5b0edc2d5b9a378c8c9c32fe774a2b70d21bf3120f6c6b5f56a8b6fd2ad2",
     "smali/com/android/mms/tzib/TzibHook$$ExternalSyntheticLambda2.smali": "3828d3585d80341b07cd4b525a76b3b3c65d46beda5ec28c5530133e4862f9fc",
@@ -996,7 +999,7 @@
     "smali/com/tzibbur/basic/util/TzbBg$Callback.smali": "79970681b409532599553143cb6c84265f3b559fcf100ad3605db159cd38c5e7",
     "smali/com/tzibbur/basic/util/TzbBg.smali": "76a630f659d9e4e49025b712819a09ff23ff3a125e6b0001c5e5562f1fae9c2f",
     "smali/com/tzibbur/basic/util/TzbConst.smali": "00043e38d6cd77b14bcdb5cd67df84dea89862d6c93fd63c2fff7da602d0ae91",
-    "smali/com/tzibbur/basic/util/TzbKillSwitch.smali": "9a36aae85b5ff106d5b9cb1b9eaf1847138be4626b0c9797289d2b92cc4a3805"
+    "smali/com/tzibbur/basic/util/TzbKillSwitch.smali": "349eacb19579b146cf4c2f8d563fc1eada28e7ed4d61ec919c29cbcf1dc6d77f"
   },
   "replaced_classes": {
     "Lcom/android/mms/MmsApp;": "8daa7a203dcaf5fdedcfc4bad081ac4e8fedabb5c4955100f97b28f116fbdfec",
@@ -10213,5 +10216,5 @@
     "xml/sms_validity_period": 2131820560,
     "xml/widget_info": 2131820561
   },
-  "version": "Tzibbur Messages integration / kit 2"
+  "version": "Tzibbur Messages integration / kit 3"
 }
