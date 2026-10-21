@@ -170,12 +170,8 @@ not a claim of support for unrelated Android messaging apps or newer SDK targets
 - Paste in SMS/MMS/new drafts and Tzibbur; per-thread notification pause for both.
 - Tzibbur account, devices, invitations, blocks, connection and notification settings.
 - The exact current gate: `not_tag=1` always blocks Tzibbur. Otherwise,
-  `tzibbur.allow=1` OR the saved dialer override enables it and clears the guest
+  `tzibbur.allow=1` enables it and clears the guest
   `tzb_config/disable_tzibbur` preference. A disabled result sets that preference.
-- Dial `*#*#894228725569#*#*` (`tzibburallow` on a keypad) to save the override.
-  The literal spelling is also registered. It enables once, survives restart,
-  never toggles off, and silently does nothing on `not_tag=1`.
-- No synthetic activation messages or old SMS activation flow.
 
 ## Checks and manual acceptance
 
