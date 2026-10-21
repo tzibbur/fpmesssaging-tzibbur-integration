@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import warnings
 import xml.etree.ElementTree as ET
 import zipfile
 import integrate as kit
@@ -119,6 +120,58 @@ class ResourcesTest(unittest.TestCase):
 
 
 class PackagingTest(unittest.TestCase):
+    def test_payload_extracts_resources_and_smali_only_in_temporary_storage(self):
+        with tempfile.TemporaryDirectory() as t:
+            bundle = Path(t) / 'kit'
+            bundle.mkdir()
+            files = {'res/values/strings.xml': b'<resources/>',
+                     'smali/com/example/Screen.smali': b'.class public Lcom/example/Screen;'}
+            with zipfile.ZipFile(bundle / 'payload.zip', 'w') as archive:
+                for name, data in files.items():
+                    archive.writestr(name, data)
+            metadata = {'payload_files': {name: kit.sha(data) for name, data in files.items()}}
+            with tempfile.TemporaryDirectory(dir=t) as scratch:
+                dest = Path(scratch) / 'payload'
+                kit.extract_payload(bundle, dest, metadata)
+                for name, data in files.items():
+                    self.assertEqual(data, (dest / name).read_bytes())
+                self.assertFalse((bundle / 'payload').exists())
+            self.assertFalse(dest.exists())
+            self.assertTrue((bundle / 'payload.zip').is_file())
+
+    def test_payload_rejects_paths_outside_scratch_and_symlinks(self):
+        paths = ['../escaped', '/absolute', 'res/../../escaped',
+                 'res\\..\\escaped', 'res/C:/escaped', 'res/link']
+        for name in paths:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as t:
+                bundle = Path(t)
+                item = zipfile.ZipInfo(name)
+                if name == 'res/link':
+                    item.create_system = 3
+                    item.external_attr = 0o120777 << 16
+                with zipfile.ZipFile(bundle / 'payload.zip', 'w') as archive:
+                    archive.writestr(item, b'outside')
+                with self.assertRaises(kit.Incompatible):
+                    kit.extract_payload(bundle, bundle / 'unpacked',
+                                        {'payload_files': {name: kit.sha(b'outside')}})
+                self.assertFalse((bundle / 'unpacked').exists())
+
+    def test_payload_rejects_changed_missing_extra_and_duplicate_files(self):
+        name, content = 'res/values/strings.xml', b'<resources/>'
+        cases = [[(name, b'changed')], [], [(name, content), ('res/extra.xml', b'extra')],
+                 [(name, content), (name, content)]]
+        for entries in cases:
+            with self.subTest(entries=entries), tempfile.TemporaryDirectory() as t:
+                bundle = Path(t)
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', UserWarning)
+                    with zipfile.ZipFile(bundle / 'payload.zip', 'w') as archive:
+                        for path, data in entries:
+                            archive.writestr(path, data)
+                with self.assertRaises(kit.Incompatible):
+                    kit.extract_payload(bundle, bundle / 'unpacked',
+                                        {'payload_files': {name: kit.sha(content)}})
+
     def test_original_dexes_preserved_and_numbered_after_overlay(self):
         with tempfile.TemporaryDirectory() as t:
             p = Path(t)

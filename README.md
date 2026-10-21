@@ -1,8 +1,13 @@
-# Tzibbur integration for FP Messaging — kit 1
+# Tzibbur integration for FP Messaging — kit 2
 
 This package carries the Tzibbur integration in a primary replacement DEX.
 It also contains the resource additions, exact
 manifest additions, editable smali, a Python installer and focused installer tests.
+
+Resources and smali are stored together in `payload.zip`. Leave that file zipped
+when uploading this kit to a repository. The installer verifies and extracts it
+into temporary storage automatically, then removes that storage on completion
+or failure. The kit folder contains fewer than 100 files, including tool notices.
 
 ## Quick start
 
@@ -107,14 +112,18 @@ and its `application` children into the existing application. Keep the existing
 application class, package, labels, unrelated components and permissions. Each
 Tzibbur screen declares its own theme. The secret-code receiver is included.
 
-`payload/res/` contains the resource files and value entries to add. It contains
+The `res/` folder inside `payload.zip` contains the resource files and value
+entries to add. The `smali/` folder holds all editable replacement classes.
+The resource additions contain
 **473 new resource names**, listed in `bundle.json` under `added_resources`.
 The one existing layout changed is `layout/conversation_list_item.xml`, which
 adds the paused-notifications bell. The installer checks its original structure.
 Existing host colors, strings, styles and IDs are retained. New Tzibbur resources
 refer to the target's host styles where appropriate, so its color choices remain.
 
-The Python script:
+The Python script first verifies `payload.zip`, checks its entries against the
+hashes in `bundle.json` under `payload_files`, and extracts it into temporary
+storage. It rejects unexpected, duplicate or unsafe paths. It then:
 
 1. Decodes the target with APKEditor and checks the compatibility contract.
 2. Matches borrowed host resources by type/name.

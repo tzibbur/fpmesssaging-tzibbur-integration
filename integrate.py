@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -272,6 +273,38 @@ def verify_bundle(bundle, metadata):
         require(p.is_file() and sha(p.read_bytes()) == expected, 'Bundle file missing or changed: ' + relative)
 
 
+def extract_payload(bundle, destination, metadata):
+    """Validate and unpack the resource/smali archive into a new scratch folder."""
+    require(not destination.exists(), 'Payload extraction directory already exists')
+    expected = metadata['payload_files']
+    require(expected, 'Empty payload manifest')
+    with zipfile.ZipFile(bundle / 'payload.zip') as archive:
+        members, seen = {}, set()
+        for item in archive.infolist():
+            name = item.filename
+            parts = name.rstrip('/').split('/')
+            require(parts[0] in ('smali', 'res') and
+                    all(part not in ('', '.', '..') for part in parts) and
+                    '\\' not in name and ':' not in name,
+                    'Unsafe payload path: ' + name)
+            require(name.casefold() not in seen, 'Duplicate payload path: ' + name)
+            seen.add(name.casefold())
+            mode = stat.S_IFMT(item.external_attr >> 16)
+            require(mode in (0, stat.S_IFDIR if item.is_dir() else stat.S_IFREG),
+                    'Unsupported payload entry type: ' + name)
+            if not item.is_dir():
+                require(len(parts) > 1, 'Invalid payload file: ' + name)
+                members[name] = item
+        require(members.keys() == expected.keys(), 'Payload archive contents differ from its manifest')
+        destination.mkdir(parents=True)
+        for name, item in members.items():
+            data = archive.read(item)
+            require(sha(data) == expected[name], 'Payload file changed: ' + name)
+            path = destination.joinpath(*name.split('/'))
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+
+
 def analyze(target, bundle, meta):
     manifest = ET.parse(target / 'AndroidManifest.xml').getroot()
     require(manifest.get('package') == 'com.android.mms', 'Expected package com.android.mms')
@@ -437,15 +470,18 @@ def main():
     require(args.check or args.out is not None, 'Specify --out or --check')
     require(args.out is None or not args.out.exists(), 'Output directory already exists')
     meta = read_json(bundle / 'bundle.json')
+    require(meta.get('format') == 2, 'Unsupported kit format; use the installer included with this kit')
     verify_bundle(bundle, meta)
     editor = [args.java, '-jar', str(Path(args.apkeditor).resolve())] if args.apkeditor.lower().endswith('.jar') else [args.apkeditor]
     with tempfile.TemporaryDirectory(prefix='tzibbur-integrate-') as scratch:
         work = Path(scratch)
         target, log = work / 'target', work / 'build.log'
+        print('Extracting resources and smali into temporary storage...', flush=True)
+        extract_payload(bundle, work / 'payload', meta)
         print('Decoding target APK...', flush=True)
         run_tool(editor, ['d', '-i', str(args.apk.resolve()), '-o', str(target)], log)
         print('Checking host code, dependencies and resources...', flush=True)
-        manifest, resources, current, allocated, mapping, overlay = analyze(target, bundle, meta)
+        manifest, resources, current, allocated, mapping, overlay = analyze(target, work, meta)
         report = {
             'bundle': meta['version'], 'input_sha256': sha(args.apk.read_bytes()),
             'input_version': manifest.get(A + 'versionName'), 'compatible': True,
@@ -457,7 +493,7 @@ def main():
         if args.check:
             print(json.dumps(report, indent=2))
             return
-        merge_resources(resources, bundle, meta, current, allocated)
+        merge_resources(resources, work, meta, current, allocated)
         merge_manifest(manifest, bundle, args.version_code)
         write_xml(target / 'AndroidManifest.xml', manifest)
         # Only our replacement classes are assembled. Original DEX files will be

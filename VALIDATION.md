@@ -25,7 +25,7 @@
 
 ## Installer tests
 
-All **14** standard-library Python tests pass. They cover:
+All **17** standard-library Python tests pass. They cover:
 
 - ID allocation while retaining existing IDs, and collision rejection.
 - Field/constants/array remapping and `const/high16` width changes.
@@ -36,6 +36,9 @@ All **14** standard-library Python tests pass. They cover:
 - Multiple original DEX files retained at shifted filenames.
 - Rejection of missing DEX positions and modified package payloads.
 - Retention of original manifest attributes/components while adding ours.
+- Temporary extraction of the combined resource/smali payload and cleanup.
+- Rejection of unsafe archive paths/symlinks and changed, missing, extra or
+  duplicate payload entries.
 
 The integrated feature build's 44 Robolectric tests passed before this export.
 No app feature implementation was changed while preparing this kit.
@@ -61,5 +64,9 @@ still need compatibility review and manual acceptance.
 
 The shareable kit includes only the integration DEX/smali, resource additions,
 manifest additions, installer, tests, documentation and the bundled build tool.
+Resources and smali are shipped in one `payload.zip`, extracted by the installer
+only into temporary storage. The compact kit was used for a full integration
+build, including verification of all 425 rebuilt replacement classes, resources,
+manifest additions and retention of the original DEX bytes.
 Complete host APKs, device build reports, original APK links/hashes, signing
 certificates and private signing material are excluded.
