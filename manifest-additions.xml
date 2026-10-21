@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+  <application>
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbDeviceBlockedActivity" android:exported="false" />
+    <activity android:theme="@style/TzbTheme.NoDisplay" android:name="com.tzibbur.basic.ui.TzbLaunchActivity" android:exported="false" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbEnrollPhoneActivity" android:exported="false" android:windowSoftInputMode="adjustResize|stateVisible" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbEnrollCodeActivity" android:exported="false" android:windowSoftInputMode="adjustResize|stateVisible" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbEnrollNameActivity" android:exported="false" android:windowSoftInputMode="adjustResize|stateVisible" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbGroupListActivity" android:exported="false" android:launchMode="singleTop" />
+    <activity android:theme="@style/TzibConversationTheme" android:name="com.tzibbur.basic.ui.TzbConversationActivity" android:exported="false" android:launchMode="singleTop" android:windowSoftInputMode="adjustResize|stateHidden" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbGroupCreateActivity" android:exported="false" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbGroupMembersActivity" android:exported="false" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbGroupInfoActivity" android:exported="false" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbContactPickerActivity" android:exported="false" android:launchMode="singleTop" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbSettingsActivity" android:exported="false" />
+    <activity android:theme="@style/TzibConversationTheme" android:name="com.tzibbur.basic.ui.TzbAboutActivity" android:exported="false" />
+    <activity android:theme="@style/TzbTheme" android:name="com.tzibbur.basic.ui.TzbApplyActivity" android:exported="false" android:windowSoftInputMode="adjustResize|stateHidden" />
+    <activity android:theme="@style/TzibConversationTheme" android:name="com.tzibbur.basic.ui.TzbLegalActivity" android:exported="false" />
+    <service android:name="com.tzibbur.basic.sync.TzbSyncService" android:exported="false" />
+    <receiver android:name="com.tzibbur.basic.sync.TzbApplyAlarm" android:exported="false" />
+    <receiver android:name="com.tzibbur.basic.sync.TzbBootReceiver" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
+    <receiver android:name="com.android.mms.tzib.TzibSecretCodeReceiver" android:exported="true">
+      <intent-filter>
+        <action android:name="android.provider.Telephony.SECRET_CODE" />
+        <action android:name="android.telephony.action.SECRET_CODE" />
+        <data android:scheme="android_secret_code" android:host="tzibburallow" />
+        <data android:scheme="android_secret_code" android:host="894228725569" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>
